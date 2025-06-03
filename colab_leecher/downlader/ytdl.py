@@ -2,6 +2,9 @@
 
 
 import logging
+import os
+import concurrent.futures
+from google.colab import drive
 import yt_dlp
 from asyncio import sleep
 from threading import Thread
@@ -94,20 +97,15 @@ def YouTubeDL(url):
             pass
         else:
             logging.info(d)
-
     ydl_opts = {
-        "format": "best",
-        "allow_multiple_video_streams": True,
-        "allow_multiple_audio_streams": True,
-        "writethumbnail": True,
-        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
-        "allow_playlist_files": True,
-        "overwrites": True,
-        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
-        "progress_hooks": [my_hook],
-        "writesubtitles": "srt",  # Enable subtitles download
-        "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
-        "logger": MyLogger(),
+         'format': 'bestvideo+bestaudio/best',
+        'outtmpl': filename,  # Use the generated filename
+        'extract-audio': True,
+        'audio-format': 'best',
+        'audio_quality': 0,
+        'merge-output-format': 'mp4',
+        'external_downloader': 'aria2c',
+        'external_downloader_args': ['-x', '16', '-s', '16', '-k', '1M']
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -152,8 +150,9 @@ def YouTubeDL(url):
                         ydl.download([url])
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
-
-
+# Directory to save downloads
+download_dir = '/content/drive/Shareddrives/AcademyMater/YouTube'
+os.makedirs(download_dir, exist_ok=True)
 async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
@@ -165,3 +164,4 @@ async def get_YT_Name(link):
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
             return "UNKNOWN DOWNLOAD NAME"
+        
